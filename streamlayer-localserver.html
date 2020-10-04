@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1,user-scalable=no" />
+    <title>StreamLayer Next</title>
+    <style>
+      html,
+      body,
+      #viewDiv {
+        height: 100%;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+      }
+    </style>
+    <link rel="stylesheet" href="https://js.arcgis.com/next/esri/themes/light/main.css">
+    <script src="https://js.arcgis.com/next/"></script>
+    <script>
+      require([
+        "esri/Map",
+        "esri/views/MapView",
+        "esri/layers/StreamLayer",
+        "esri/layers/support/Field",
+        "esri/geometry/SpatialReference"
+    ], function (Map, MapView, StreamLayer, Field, SpatialReference) {
+        var streamLayer, streamLayerView;
+
+        const map = new Map({
+            basemap: "streets-navigation-vector"
+        });
+
+        const view = new MapView({
+            container: "viewDiv",
+            map: map,
+            center: [-2.627198,39.971888],
+            zoom: 5
+        });
+
+        view.when(function(){
+            layer = new StreamLayer({
+                webSocketUrl: "ws://localhost:8000",
+                objectIdField: "codBus",
+                timeInfo:{
+                    trackIdField: "last_update"
+                },
+                fields:[
+                    new Field({
+                        "name": "codBus",
+                        "alias": "ObjectID",
+                        "type": "oid"
+                    }), new Field({
+                        "name": "sentido",
+                        "alias": "sentido",
+                        "type": "string"
+                    })
+                ],
+                spatialReference: new SpatialReference({ wkid: 4326 }),
+                geometryType: "point",
+                renderer: {
+                  type: "simple",
+                  symbol: {
+                    type: "simple-marker",
+                    size: 6,
+                    color: "black",
+                    outline: {
+                      width: 0.5,
+                      color: "white"
+                    }
+                  }
+                }
+            });
+
+            layer.on("layerview-create-error", function(event) {
+                console.error("LayerView failed to create for layer with the id: ", layer.id, " in this view: ", event.view);
+                console.error(event.error.message);
+            });
+
+            layer.on("layerview-create", function(event){
+                event.layerView;
+            });
+
+            map.add(layer);
+
+        }, function(error){
+            console.error("Error when creating the view: ", e);
+        });
+    });
+    </script>
+  </head>
+
+  <body>
+    <div id="viewDiv"></div>
+  </body>
+</html>
